@@ -51,58 +51,10 @@ extern INCONTROLSTATE   g_InControlState;		 // State information that controller
 //-----------------------------------------------------------------------------
 extern boolean          g_fDebugOutput;
 
-#if 0
-extern boolean		g_fHexOn;				//Switch to turn on Phoenix
-extern boolean		g_fPrev_HexOn;			//Previous loop state 
-//Body position
-extern long		BodyPosX; 		//Global Input for the position of the body
-extern long		BodyPosY; 
-extern long		BodyPosZ; 
-
-//Body Inverse Kinematics
-extern long		BodyRotX1; 		//Global Input pitch of the body
-extern long		BodyRotY1;		//Global Input rotation of the body
-extern long		BodyRotZ1; 		//Global Input roll of the body
-
-
-//[gait]
-extern byte		GaitType;			//Gait type
-extern short		NomGaitSpeed;		//Nominal speed of the gait
-
-extern short		LegLiftHeight;		//Current Travel height
-extern long		TravelLengthX;		//Current Travel length X
-extern long		TravelLengthZ; 		//Current Travel length Z
-extern long		TravelRotationY; 	//Current Travel Rotation Y
-
-//[Single Leg Control]
-extern byte		SelectedLeg;
-extern short		SLLegX;
-extern short		SLLegY;
-extern short		SLLegZ;
-extern boolean		fSLHold;		 	//Single leg control mode
-
-
-//[Balance]
-extern boolean BalanceMode;
-
-//[TIMING]
-extern byte			InputTimeDelay;	//Delay that depends on the input to get the "sneaking" effect
-extern word			SpeedControl;	//Adjustible Delay
-#endif
-
-
 extern void MSound(uint8_t _pin, byte cNotes, ...);
-//extern int DBGPrintf(const char *format, ...);
-//extern int SSCPrintf(const char *format, ...);
-
-
-// The defined controller must provide the following
-extern void InitController(void);
-extern void	ControlInput(void);
-extern void	AllowControllerInterrupts(boolean fAllow);
-
-
 extern bool CheckVoltage(void);
+
+void AdjustLegPositionsToBodyHeight(void);
 
 // debug handler...
 extern boolean g_fDBGHandleError;

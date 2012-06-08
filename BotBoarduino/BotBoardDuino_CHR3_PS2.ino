@@ -19,6 +19,7 @@
 // Header Files
 //=============================================================================
 
+#define DEFINE_HEX_GLOBALS
 #if ARDUINO>99
 #include <Arduino.h>
 #else
@@ -345,6 +346,7 @@ void setup(){
     g_InControlState.GaitType = 1;  // 0; Devon wanted 
     g_InControlState.BalanceMode = 0;
     g_InControlState.LegLiftHeight = 50;
+    g_InControlState.ForceGaitStepCnt = 0;    // added to try to adjust starting positions depending on height...
     GaitStep = 1;
     GaitSelect();
     
@@ -503,7 +505,7 @@ void loop(void)
         }
         
     } else {
-        //Turn the bot off
+        //Turn the bot off - May need to add ajust here...
         if (g_InControlState.fPrev_HexOn || (AllDown= 0)) {
             ServoMoveTime = 600;
             StartUpdateServos();
@@ -749,7 +751,8 @@ void GaitSelect(void)
 void GaitSeq(void)
 {
     //Check if the Gait is in motion
-    TravelRequest = ((abs(g_InControlState.TravelLength.x)>cTravelDeadZone) || (abs(g_InControlState.TravelLength.z)>cTravelDeadZone) || (abs(g_InControlState.TravelLength.y)>cTravelDeadZone));
+    TravelRequest = (abs(g_InControlState.TravelLength.x)>cTravelDeadZone) || (abs(g_InControlState.TravelLength.z)>cTravelDeadZone) 
+          || (abs(g_InControlState.TravelLength.y)>cTravelDeadZone) || (g_InControlState.ForceGaitStepCnt != 0);
     if (NrLiftedPos == 5)
   	LiftDivFactor = 4;    
     else  
@@ -763,6 +766,10 @@ void GaitSeq(void)
     
         Gait(LegIndex);
     }    // next leg
+    
+    // If we have a force count decrement it now... 
+    if (g_InControlState.ForceGaitStepCnt)
+      g_InControlState.ForceGaitStepCnt--;
 }
 
 
@@ -1383,4 +1390,64 @@ short SmoothControl (short CtrlMoveInp, short CtrlMoveOut, byte CtrlDivider)
     return CtrlMoveInp;
 }
 
+//--------------------------------------------------------------------
+// AdjustLegPositionsToBodyHeight() - Will try to adjust the position of the legs
+//     to be appropriate for the current y location of the body...
+//--------------------------------------------------------------------
+#define DEBUG
 
+uint8_t g_iLegInitIndex = 0x00;    // remember which index we are currently using...
+
+void AdjustLegPositionsToBodyHeight(void)
+{
+#ifdef CNT_HEX_INITS
+    // Lets see which of our units we should use...
+    // Note: We will also limit our body height here...
+    if (g_InControlState.BodyPos.y > (short)pgm_read_byte(&g_abHexMaxBodyY[CNT_HEX_INITS-1]))
+      g_InControlState.BodyPos.y =  (short)pgm_read_byte(&g_abHexMaxBodyY[CNT_HEX_INITS-1]);
+    
+    uint8_t i;
+    word XZLength1;
+    for(i = 0; i < CNT_HEX_INITS; i++) {
+      if (g_InControlState.BodyPos.y <= (short)pgm_read_byte(&g_abHexMaxBodyY[i])) {
+        XZLength1 = pgm_read_byte(&g_abHexIntXZ[i]);
+        break;
+      }
+    }
+    if (i != g_iLegInitIndex) { 
+       g_iLegInitIndex = i;  // remember the current index...
+       //now lets see what happens when we change the leg positions...
+       for (uint8_t LegIndex = 0; LegIndex <= 5; LegIndex++) {
+#ifdef DEBUG
+          if (g_fDebugOutput) {
+            DBGSerial.print("(");
+            DBGSerial.print(LegPosX[LegIndex], DEC);
+            DBGSerial.print(",");
+            DBGSerial.print(LegPosZ[LegIndex], DEC);
+            DBGSerial.print(")->");
+          }
+#endif
+           GetSinCos((short)pgm_read_word(&cCoxaAngle1[LegIndex]));
+           LegPosX[LegIndex] = ((long)((long)cos4 * XZLength1))/c4DEC;  //Set start positions for each leg
+           LegPosZ[LegIndex] = -((long)((long)sin4 * XZLength1))/c4DEC;
+#ifdef DEBUG
+          if (g_fDebugOutput) {
+            DBGSerial.print("(");
+            DBGSerial.print(LegPosX[LegIndex], DEC);
+            DBGSerial.print(",");
+            DBGSerial.print(LegPosZ[LegIndex], DEC);
+            DBGSerial.print(") ");
+          }
+#endif
+       }
+#ifdef DEBUG
+      if (g_fDebugOutput) {
+        DBGSerial.println("");
+      }
+#endif
+      // Make sure we cycle through one gait to have the legs all move into their new locations...
+      g_InControlState.ForceGaitStepCnt = StepsInGait;
+    }
+#endif CNT_HEX_INITS
+
+}

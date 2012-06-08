@@ -65,6 +65,7 @@ typedef struct _InControlState {
 //[TIMING]
      byte			InputTimeDelay;	//Delay that depends on the input to get the "sneaking" effect
      word			SpeedControl;	//Adjustible Delay
+     byte       ForceGaitStepCnt;          // new to allow us to force a step even when not moving
 } INCONTROLSTATE;
 
 

@@ -18,7 +18,8 @@
 //   - First Release
 //
 //====================================================================
-
+#ifndef HEX_CFG_H
+#define HEX_CFG_H
 //[CONDITIONAL COMPILING] - COMMENT IF NOT WANTED
 // Define other optional compnents to be included or not...
 #define OPT_TERMINAL_MONITOR  
@@ -223,11 +224,21 @@
 
 //--------------------------------------------------------------------
 //[START POSITIONS FEET]
-#define cHexInitXZ	 80
-#define CHexInitXZCos60  40        // COS(60) = .5
-#define CHexInitXZSin60  69    // sin(60) = .866
-#define CHexInitY	80 //30
+#define cHexInitXZ	 111 
+#define CHexInitXZCos60  56        // COS(60) = .5
+#define CHexInitXZSin60  96    // sin(60) = .866
+#define CHexInitY		 65 //30
 
+// Lets try some multi leg positions depending on height settings.
+#define CNT_HEX_INITS 3
+#define MAX_BODY_Y  90
+#ifdef DEFINE_HEX_GLOBALS
+const byte g_abHexIntXZ[] PROGMEM = {cHexInitXZ, 99, 86};
+const byte g_abHexMaxBodyY[] PROGMEM = { 20, 50, MAX_BODY_Y};
+#else
+extern const byte g_abHexIntXZ[] PROGMEM;
+extern const byte g_abHexMaxBodyY[] PROGMEM;
+#endif
 
 #define cRRInitPosX     CHexInitXZCos60      //Start positions of the Right Rear leg
 #define cRRInitPosY     CHexInitY
@@ -260,3 +271,4 @@
 #define cTarsFactorB	60	//4DOF ONLY
 #define cTarsFactorC	50	//4DOF ONLY
 
+#endif CFG_HEX_H
